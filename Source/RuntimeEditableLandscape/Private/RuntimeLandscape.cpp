@@ -132,6 +132,19 @@ void ARuntimeLandscape::HandleLandscapeLayerOwnerDestroyed(AActor* DestroyedActo
 	}
 }
 
+void ARuntimeLandscape::BakeLandscapeLayersAndDestroyLandscape()
+{
+	if (ParentLandscape)
+	{
+		if (bBakeLayersOnBeginPlay)
+		{
+			BakeLandscapeLayers();
+		}
+
+		ParentLandscape->Destroy();
+	}
+}
+
 void ARuntimeLandscape::PostLoad()
 {
 	Super::PostLoad();
@@ -157,10 +170,7 @@ void ARuntimeLandscape::BeginPlay()
 			World, GroundTypeBrush.Value.BrushMaterial);
 	}
 
-	if (bBakeLayersOnBeginPlay)
-	{
-		BakeLandscapeLayers();
-	}
+	GetWorldTimerManager().SetTimerForNextTick(this, &ARuntimeLandscape::BakeLandscapeLayersAndDestroyLandscape);
 }
 
 void ARuntimeLandscape::RemoveLandscapeLayer(const ULandscapeLayerComponent* Layer)

@@ -271,6 +271,8 @@ protected:
 
 	UFUNCTION()
 	void HandleLandscapeLayerOwnerDestroyed(AActor* DestroyedActor);
+	UFUNCTION()
+	void BakeLandscapeLayersAndDestroyLandscape();
 	
 	/**
 	 * Updates the vertex layer weights for the provided ground type layer
