@@ -28,7 +28,7 @@ void FGenerateAdditionalVertexDataWorker::GenerateGrassDataForVertex(const int32
 		return;
 	}
 
-	const FGrassTypeSettings* SelectedGrass = nullptr;
+	FGrassTypeSettings SelectedGrass;
 	float HighestWeight = 0;
 
 	bool bIsLayerApplied = false;
@@ -38,7 +38,7 @@ void FGenerateAdditionalVertexDataWorker::GenerateGrassDataForVertex(const int32
 		if (LayerWeightData.Value >= HighestWeight && LayerWeightData.Value > 0.2f)
 		{
 			HighestWeight = LayerWeightData.Value;
-			SelectedGrass = &LayerWeightData.Key->GrassTypeSettings;
+			SelectedGrass = LayerWeightData.Key->GrassTypeSettings;
 			bIsLayerApplied = true;
 		}
 	}
@@ -54,8 +54,9 @@ void FGenerateAdditionalVertexDataWorker::GenerateGrassDataForVertex(const int32
 		{
 			if (HeightBasedData.MinHeight < VertexHeight && HeightBasedData.MaxHeight > VertexHeight)
 			{
-				SelectedGrass = &HeightBasedData.Grass;
+				SelectedGrass = HeightBasedData.Grass;
 				HighestWeight = 1.0f;
+				bIsLayerApplied = true;
 			}
 		}
 	}
@@ -63,14 +64,17 @@ void FGenerateAdditionalVertexDataWorker::GenerateGrassDataForVertex(const int32
 	// clean data carried over from previous run
 	RebuildManager->DataBuffer.AdditionalData[VertexIndex].ClearData();
 
-	GenerateGrassTransformsAtVertex(SelectedGrass, VertexIndex, HighestWeight);
+	if (bIsLayerApplied)
+	{
+		GenerateGrassTransformsAtVertex(SelectedGrass, VertexIndex, HighestWeight);
+	}
 }
 
-void FGenerateAdditionalVertexDataWorker::GenerateGrassTransformsAtVertex(const FGrassTypeSettings* SelectedGrass,
+void FGenerateAdditionalVertexDataWorker::GenerateGrassTransformsAtVertex(const FGrassTypeSettings& SelectedGrass,
                                                                           const int32 VertexIndex,
                                                                           float Weight) const
 {
-	if (!SelectedGrass || !SelectedGrass->GrassType)
+	if (!IsValid(SelectedGrass.GrassType))
 	{
 		return;
 	}
@@ -82,9 +86,9 @@ void FGenerateAdditionalVertexDataWorker::GenerateGrassTransformsAtVertex(const 
 	float Pitch;
 	UKismetMathLibrary::GetSlopeDegreeAngles(FVector::RightVector, Normal, FVector::UpVector, Pitch, Roll);
 	// don't generate grass data if the vertex normal is steeper than the max
-	if (SelectedGrass->MaxSlopeAngle > 0.0f
-		&& (FMath::Abs(Roll) > SelectedGrass->MaxSlopeAngle
-			|| FMath::Abs(Pitch) > SelectedGrass->MaxSlopeAngle))
+	if (SelectedGrass.MaxSlopeAngle > 0.0f
+		&& (FMath::Abs(Roll) > SelectedGrass.MaxSlopeAngle
+			|| FMath::Abs(Pitch) > SelectedGrass.MaxSlopeAngle))
 	{
 		return;
 	}
@@ -93,7 +97,7 @@ void FGenerateAdditionalVertexDataWorker::GenerateGrassTransformsAtVertex(const 
 	const FVector& VertexRelativeLocation = RebuildManager->DataBuffer.VerticesRelative[VertexIndex];
 	FLandscapeAdditionalData& AdditionalData = RebuildManager->DataBuffer.AdditionalData[VertexIndex];
 
-	for (const FGrassVariety& Variety : SelectedGrass->GrassType->GrassVarieties)
+	for (const FGrassVariety& Variety : SelectedGrass.GrassType->GrassVarieties)
 	{
 		FLandscapeGrassVertexData& GrassData = AdditionalData.GrassData.FindOrAdd(Variety.GrassMesh);
 
@@ -118,7 +122,7 @@ void FGenerateAdditionalVertexDataWorker::GenerateGrassTransformsAtVertex(const 
 
 			FRotator Rotation;
 			GetRandomGrassRotation(Variety, Rotation);
-			
+
 			FVector Scale;
 			GetRandomGrassScale(Variety, Scale);
 
