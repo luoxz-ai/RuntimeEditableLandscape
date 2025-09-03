@@ -20,7 +20,7 @@ void URuntimeLandscapeRebuildManager::QueueRebuild(URuntimeLandscapeComponent* C
 {
 	if (CurrentComponent)
 	{
-		RebuildQueue.Enqueue(ComponentToRebuild);
+		RebuildQueue.AddUnique(ComponentToRebuild);
 	}
 	else
 	{

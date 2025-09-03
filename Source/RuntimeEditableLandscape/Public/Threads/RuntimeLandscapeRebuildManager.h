@@ -118,7 +118,8 @@ private:
 	FGenerationDataCache GenerationDataCache;
 	UPROPERTY(VisibleAnywhere)
 	FRuntimeLandscapeRebuildBuffer DataBuffer;
-	TQueue<URuntimeLandscapeComponent*> RebuildQueue;
+	UPROPERTY(VisibleAnywhere)
+	TArray<URuntimeLandscapeComponent*> RebuildQueue;
 
 	FQueuedThreadPool* ThreadPool;
 	FGenerateVerticesWorker* VertexRunner;
@@ -149,14 +150,15 @@ private:
 
 	void RebuildNextInQueue()
 	{
-		if (RebuildQueue.Dequeue(CurrentComponent))
-		{
-			StartRebuild();
-		}
-		else
+		if (RebuildQueue.IsEmpty())
 		{
 			CurrentComponent = nullptr;
 			SetComponentTickEnabled(false);
+		}
+		else
+		{
+			CurrentComponent = RebuildQueue.Pop();
+			StartRebuild();
 		}
 	}
 

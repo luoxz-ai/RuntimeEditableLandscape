@@ -84,7 +84,4 @@ protected:
 
 	/** Applies data to the landscape after all threads are finished */
 	void FinishRebuild(const FRuntimeLandscapeRebuildBuffer& RebuildBuffer);
-
-private:
-	bool bIsStale;
 };

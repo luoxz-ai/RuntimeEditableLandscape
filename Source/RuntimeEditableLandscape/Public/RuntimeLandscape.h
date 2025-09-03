@@ -253,9 +253,19 @@ protected:
 	float QuadSideLength;
 	UPROPERTY()
 	float ParentHeight;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<ALandscape> ParentLandscape;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UMaterialInterface> LandscapeMaterial;
+	UPROPERTY(EditAnywhere, Category = "Lighting")
+	uint8 bCastShadow : 1 = 1;
+	UPROPERTY(EditAnywhere, Category = "Lighting", meta = (EditCondition = "bCastShadow"))
+	uint8 bAffectDistanceFieldLighting : 1 = 1;
 
 	bool bIsRebuilding;
 
+	UFUNCTION(BlueprintCallable)
+	void InitializeFromLandscape();
 	UFUNCTION(BlueprintCallable)
 	void BakeLandscapeLayers();
 
@@ -269,19 +279,11 @@ protected:
 
 	virtual void PostLoad() override;
 	virtual void BeginPlay() override;
+	void Rebuild();
 
 #if WITH_EDITORONLY_DATA
 
 public:
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<ALandscape> ParentLandscape;
-	UPROPERTY(EditAnywhere, Category = "Lighting")
-	uint8 bCastShadow : 1 = 1;
-	UPROPERTY(EditAnywhere, Category = "Lighting", meta = (EditCondition = "bCastShadow"))
-	uint8 bAffectDistanceFieldLighting : 1 = 1;
-
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UMaterialInterface> LandscapeMaterial;
 	UPROPERTY(EditAnywhere, Category = "Debug")
 	bool bEnableDebug;
 	UPROPERTY(EditAnywhere, Category = "Debug", meta = (EditCondition = "bEnableDebug", EditConditionHides))
@@ -299,11 +301,7 @@ public:
 	FColor DebugColor2 = FColor::Emerald;
 	UPROPERTY(EditAnywhere, Category = "Debug")
 	TObjectPtr<UMaterial> DebugMaterial;
-
-	UFUNCTION(BlueprintCallable)
-	void InitializeFromLandscape();
-
-	void Rebuild();
+	
 	virtual void PreInitializeComponents() override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 

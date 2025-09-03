@@ -398,7 +398,7 @@ void ARuntimeLandscape::Rebuild()
 		// calculate index by position for more efficient access later
 		const FVector StartLocation = ParentOrigin - ParentExtent;
 		const FVector ComponentLocation = LandscapeComponent->GetComponentLocation() - StartLocation;
-		const int32 ComponentIndex = ComponentLocation.X / ComponentSize + ComponentLocation.Y / ComponentSize *
+		int32 ComponentIndex = ComponentLocation.X / ComponentSize + ComponentLocation.Y / ComponentSize *
 			ComponentAmount.X;
 
 		LandscapeComponent->Initialize(ComponentIndex, HeightValues);
@@ -407,15 +407,15 @@ void ARuntimeLandscape::Rebuild()
 	}
 
 	// add remembered layers
-	for (TObjectPtr<const ULandscapeLayerComponent> Layer : LandscapeLayers)
+	for (const ULandscapeLayerComponent* Layer : LandscapeLayers)
 	{
 		AddLandscapeLayer(Layer);
 	}
 }
 
-#if WITH_EDITORONLY_DATA
 void ARuntimeLandscape::InitializeFromLandscape()
 {
+#if WITH_EDITORONLY_DATA // do nothing in packaged build (is still there to make editor widget work)
 	if (!ParentLandscape)
 	{
 		return;
@@ -447,8 +447,10 @@ void ARuntimeLandscape::InitializeFromLandscape()
 	VertexAmountPerComponent.Y = MeshResolution.Y / ComponentAmount.Y + 1;
 
 	Rebuild();
+#endif
 }
 
+#if WITH_EDITORONLY_DATA
 void ARuntimeLandscape::PreInitializeComponents()
 {
 	Super::PreInitializeComponents();

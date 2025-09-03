@@ -71,12 +71,6 @@ UHierarchicalInstancedStaticMeshComponent* URuntimeLandscapeComponent::FindOrAdd
 
 void URuntimeLandscapeComponent::Rebuild()
 {
-	if (bIsStale)
-	{
-		return;
-	}
-
-	bIsStale = true;
 	ParentLandscape->GetRebuildManager()->QueueRebuild(this);
 }
 
@@ -239,7 +233,6 @@ void URuntimeLandscapeComponent::FinishRebuild(const FRuntimeLandscapeRebuildBuf
 
 	UE_LOG(RuntimeEditableLandscape, Display, TEXT("	Finished rebuilding Landscape component %s %i..."),
 	       *GetOwner()->GetName(), Index);
-	bIsStale = false;
 }
 
 void URuntimeLandscapeComponent::DestroyComponent(bool bPromoteChildren)
