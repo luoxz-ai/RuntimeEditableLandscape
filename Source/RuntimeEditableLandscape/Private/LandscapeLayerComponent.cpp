@@ -14,8 +14,22 @@ void ULandscapeLayerComponent::ApplyToLandscape()
 	if (AffectedLandscapes.IsEmpty())
 	{
 		UE_LOG(LogTemp, Warning,
-		       TEXT("LandscapeLayerComponent on %s could not find a landscape and can not be applied."),
+		       TEXT("LandscapeLayerComponent on '%s' could not find a landscape and can not be applied."),
 		       *GetOwner()->GetName());
+	}
+
+	// if there is an affected landscape that is not yet initialized, wait for it to finish
+	for (ARuntimeLandscape* LandscapeActor : AffectedLandscapes)
+	{
+		if (LandscapeActor->IsInitialized() == false)
+		{
+			UE_LOG(LogTemp, Warning,
+			       TEXT("LandscapeLayerComponent on '%s' is waiting for landscape '%s' to be initialized."),
+			       *GetOwner()->GetName(), *LandscapeActor->GetName());
+			LandscapeActor->OnLandscapeInitialized.AddUniqueDynamic(
+				this, &ULandscapeLayerComponent::HandleLandscapeInitialized);
+			return;
+		}
 	}
 
 	for (ARuntimeLandscape* LandscapeActor : AffectedLandscapes)

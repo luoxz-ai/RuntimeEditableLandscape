@@ -110,15 +110,18 @@ protected:
 	UFUNCTION()
 	void HandleOwnerDestroyed(AActor* DestroyedActor) { DestroyComponent(); }
 
+	UFUNCTION()
+	void HandleLandscapeInitialized(ARuntimeLandscape* InitializedLandscape) { ApplyToLandscape(); }
+
 	virtual void BeginPlay() override;
 	virtual void DestroyComponent(bool bPromoteChildren = false) override;
 
 	virtual void OnRegister() override
 	{
-		Super::OnRegister();		
+		Super::OnRegister();
 		UpdateShape();
 	}
-	
+
 #if WITH_EDITORONLY_DATA
 	virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

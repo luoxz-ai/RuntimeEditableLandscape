@@ -142,7 +142,11 @@ void ARuntimeLandscape::BakeLandscapeLayersAndDestroyLandscape()
 		}
 
 		ParentLandscape->Destroy();
+		ParentLandscape = nullptr;
 	}
+
+	OnLandscapeInitialized.Broadcast(this);
+	OnLandscapeInitialized.Clear(); // won't be needed anymore, free up the memory
 }
 
 void ARuntimeLandscape::PostLoad()

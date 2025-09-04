@@ -96,6 +96,8 @@ struct FHeightBasedLandscapeData
 	FGrassTypeSettings Grass;
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRuntimeLandscapeInitialized, ARuntimeLandscape*, InitializedLandscape);
+
 UCLASS(Blueprintable, BlueprintType)
 class RUNTIMEEDITABLELANDSCAPE_API ARuntimeLandscape : public AActor
 {
@@ -118,12 +120,15 @@ public:
 	 */
 	uint8 bUpdateNavigation : 1 = 1;
 
+	FOnRuntimeLandscapeInitialized OnLandscapeInitialized;
+
 	/**
 	 * Adds a new layer to the landscape
 	 * @param LayerToAdd The added landscape layer
 	 */
 	void AddLandscapeLayer(const ULandscapeLayerComponent* LayerToAdd);
-	void DrawGroundType(const ULandscapeGroundTypeData* GroundType, ELayerShape Shape, const FTransform& WorldTransform, const FVector& BrushExtent);
+	void DrawGroundType(const ULandscapeGroundTypeData* GroundType, ELayerShape Shape, const FTransform& WorldTransform,
+	                    const FVector& BrushExtent);
 	void RemoveLandscapeLayer(const ULandscapeLayerComponent* Layer);
 	TMap<const ULandscapeGroundTypeData*, float> GetGroundTypeLayerWeightsAtVertexCoordinates(
 		int32 SectionIndex, int32 X, int32 Y) const;
@@ -202,6 +207,8 @@ public:
 
 	FVector GetOriginLocation() const;
 	FBox2D GetComponentBounds(int32 SectionIndex) const;
+	/** Returns true if the landscape is fully initialized -> the parent Landscape is destroyed */
+	bool IsInitialized() const { return ParentLandscape == nullptr; }
 
 protected:
 	UPROPERTY()
@@ -273,7 +280,7 @@ protected:
 	void HandleLandscapeLayerOwnerDestroyed(AActor* DestroyedActor);
 	UFUNCTION()
 	void BakeLandscapeLayersAndDestroyLandscape();
-	
+
 	/**
 	 * Updates the vertex layer weights for the provided ground type layer
 	 */
@@ -303,7 +310,7 @@ public:
 	FColor DebugColor2 = FColor::Emerald;
 	UPROPERTY(EditAnywhere, Category = "Debug")
 	TObjectPtr<UMaterial> DebugMaterial;
-	
+
 	virtual void PreInitializeComponents() override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
