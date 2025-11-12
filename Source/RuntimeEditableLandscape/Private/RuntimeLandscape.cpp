@@ -325,9 +325,22 @@ FBox2D ARuntimeLandscape::GetComponentBounds(int32 SectionIndex) const
 void ARuntimeLandscape::UpdateVertexLayerWeights(FRuntimeLandscapeGroundTypeLayerSet& LayerSet)
 {
 	FImage MaskImage;
-	FImageUtils::GetRenderTargetImage(LayerSet.RenderTarget, MaskImage);
-	TArrayView64<FColor> MaskValues = MaskImage.AsBGRA8();
-	LayerSet.VertexLayerWeights = MaskValues;
+	if (ensure(LayerSet.RenderTarget))
+	{
+		if (FTextureResource* Resource = LayerSet.RenderTarget->GetResource())
+		{
+			bool bHasMatchingResolution = LayerSet.RenderTarget->SizeX == Resource->GetSizeX()
+				&& LayerSet.RenderTarget->SizeY == Resource->GetSizeY();
+			if (ensureAlwaysMsgf(bHasMatchingResolution,
+			                     TEXT("Render target hat non matching resolution. Save the asset %s and try again."),
+			                     *LayerSet.RenderTarget->GetName()))
+			{
+				FImageUtils::GetRenderTargetImage(LayerSet.RenderTarget, MaskImage);
+				TArrayView64<FColor> MaskValues = MaskImage.AsBGRA8();
+				LayerSet.VertexLayerWeights = MaskValues;
+			}
+		}
+	}
 }
 
 void ARuntimeLandscape::BakeLandscapeLayers()
@@ -343,10 +356,30 @@ void ARuntimeLandscape::BakeLandscapeLayers()
 			{
 				LayerSet.RenderTarget->SizeX = MeshResolution.X + 1;
 				LayerSet.RenderTarget->SizeY = MeshResolution.Y + 1;
-				ParentLandscape->RenderWeightmaps(GetActorTransform(), Box2D, LayerNames,
-				                                  LayerSet.RenderTarget);
 
-				UpdateVertexLayerWeights(LayerSet);
+				TArray<ULandscapeLayerInfoObject*> PaintLayers;
+				ParentLandscape->GetUsedPaintLayers(0, PaintLayers);
+				TArray<FName> BakedLayerNames;
+				for (const ULandscapeLayerInfoObject* PaintLayer : PaintLayers)
+				{
+					if (LayerSet.GetLayerNames().Contains(PaintLayer->LayerName))
+					{
+						BakedLayerNames.Add(PaintLayer->LayerName);
+					}
+					else
+					{
+						UE_LOG(LogTemp, Warning, TEXT("Could not bake Landscape layer %s -> no matching LayerSet"),
+						       *PaintLayer->LayerName.ToString())
+					}
+				}
+
+
+				if (!BakedLayerNames.IsEmpty()
+					&& ensureAlways(ParentLandscape->RenderWeightmaps(GetActorTransform(), Box2D, BakedLayerNames,
+						LayerSet.RenderTarget)))
+				{
+					UpdateVertexLayerWeights(LayerSet);
+				}
 			}
 		}
 	}
